@@ -5,10 +5,14 @@ class Person:
     def __init__(self, name, money):
         self.name = name
         self.money = money
+        self.games = []
 
     def __str__(self):
         return f"{self.name} has {self.money}"
     
+    def add_game(self, game):
+        self.games.append(game)
+
     def get_money(self):
         return self.money
     
@@ -20,9 +24,16 @@ class Person:
     
 
 class Game:
-    def __init__(self, players, game_fee):
+    game_no = 0
+    def __init__(self, players, game_fee, governemnt):
         self.players = players
         self.game_fee = game_fee
+        self.governemnt = governemnt
+        self.game_no = Game.game_no
+        Game.game_no += 1
+
+        for player in self.players:
+            player.add_game(self)
 
     def play(self):
         
@@ -33,11 +44,22 @@ class Game:
         # Select random player
         import random
         self.winner = random.choice(self.players)
-        self.winner.add_money(total_money)
+        self.remaining_money = self.governemnt.collect_tax(total_money)
+        self.winner.add_money(self.remaining_money)
 
     def __str__(self):
-        return f"Game with players: {[player.name for player in self.players]} and game fee: {self.game_fee} won by {self.winner.name}"
+        return f"Game {self.game_no} with players: {[player.name for player in self.players]} and game fee: {self.game_fee} won by {self.winner.name}"
 
+
+class Government:
+    def __init__(self, percentage):
+        self.percentage = percentage
+        self.total_tax_collected = 0
+
+    def collect_tax(self, total_money):
+        todeduct = total_money * self.percentage/100
+        self.total_tax_collected += todeduct
+        return total_money - todeduct
 
 def split_into_random_lists(lst, n):
     """
@@ -56,7 +78,7 @@ def plot(iteration_player):
     plt.grid()
     plt.show()
 
-def run_simulation(total_players, initial_amount, game_amount, players_per_game, max_iterations):
+def run_simulation(total_players, initial_amount, game_amount, players_per_game, max_iterations, governemnt):
     players = []
     games = []
     iteration_to_player = []
@@ -73,27 +95,40 @@ def run_simulation(total_players, initial_amount, game_amount, players_per_game,
 
         players = [player for player in players if player.get_money() >= game_amount]
 
-        print(f"Iteration: {iteration} : {len(players)}")
+        #print(f"Iteration: {iteration} : {len(players)}")
+        #print(f"Total {sum(player.get_money() for player in players)} and tax collected {governemnt.total_tax_collected}")
         iteration_to_player.append(len(players))
+
+        if len(players) == 1:
+            return iteration_to_player, games, original_players, players
 
         games_players = split_into_random_lists(players, players_per_game)
 
         for game_player in games_players:
-            game = Game(game_player, game_amount)
+            game = Game(game_player, game_amount, governemnt)
             game.play()
             games.append(game)
 
     return iteration_to_player, games, original_players, players
 
 
-total_players = 100000
+total_players = 1000
 initial_amount = 1000
-game_amount = 100
-players_per_games = [9]
-max_iterations = 1000
+game_amount = 10
+players_per_games = [10]
+max_iterations = 10000
+governemnt = Government(5)  # 10% tax
 
 for players_per_game in players_per_games:
-    iteration_to_player, games, original_players, players = run_simulation(total_players, initial_amount, game_amount, players_per_game, max_iterations)
+    iteration_to_player, games, original_players, players = run_simulation(total_players, initial_amount, game_amount, players_per_game, max_iterations, governemnt)
     print(f"After {len(iteration_to_player)} iterations, {len(players)} players remain out of {total_players} i.e {len(players)/total_players*100:.2f}%")
     print(f"Games played: {len(games)}")
-    plot(iteration_to_player)
+    print(f"total Remaining money : {sum(player.get_money() for player in original_players)} and tax collected ({governemnt.percentage}): {governemnt.total_tax_collected}")
+    print(f"total Remaining money with winners : {len(players)} : {sum(player.get_money() for player in players)}")
+    # Find the winner
+    if players:
+        winner = max(players, key=lambda p: p.get_money())
+        print(f"Winner: {winner.name} with {winner.get_money()} played {len(winner.games)} games")
+
+    #plot(iteration_to_player)
+    pass
