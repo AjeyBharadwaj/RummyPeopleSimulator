@@ -95,8 +95,8 @@ def run_simulation(total_players, initial_amount, game_amount, players_per_game,
 
         players = [player for player in players if player.get_money() >= game_amount]
 
-        #print(f"Iteration: {iteration} : {len(players)}")
-        #print(f"Total {sum(player.get_money() for player in players)} and tax collected {governemnt.total_tax_collected}")
+        print(f"Iteration: {iteration} : {len(players)}")
+        print(f"Total {sum(player.get_money() for player in players)} and tax collected {governemnt.total_tax_collected}")
         iteration_to_player.append(len(players))
 
         if len(players) == 1:
@@ -112,12 +112,12 @@ def run_simulation(total_players, initial_amount, game_amount, players_per_game,
     return iteration_to_player, games, original_players, players
 
 
-total_players = 1000
+total_players = 1000000
 initial_amount = 1000
-game_amount = 10
-players_per_games = [10]
-max_iterations = 10000
-governemnt = Government(5)  # 10% tax
+game_amount = 100
+players_per_games = [100000]
+max_iterations = 100
+governemnt = Government(30)  # 10% tax
 
 for players_per_game in players_per_games:
     iteration_to_player, games, original_players, players = run_simulation(total_players, initial_amount, game_amount, players_per_game, max_iterations, governemnt)
